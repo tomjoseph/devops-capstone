@@ -1,5 +1,5 @@
 # Importing flask module in the project is mandatory
-from flask import Flask, request, jsonify
+from flask import Flask
 from flask.logging import create_logger
 import logging
 
@@ -10,20 +10,20 @@ app = Flask(__name__)
 LOG = create_logger(app)
 LOG.setLevel(logging.INFO)
 
-global app_version = "1.0"
+app_version = "1.0"
 
 # The route() function of the Flask class is a decorator,
 # which tells the application which URL should call
 # the associated function.
 @app.route("/")
 def home():
-    html = f"<h3>Tom's DevOps Capstone Home</h3>\n Client on Hello! <a href="/hello">Hello</a>"
+    html = f"<h3>Tom's DevOps Capstone Home</h3>\n Client on Hello! <a href='/hello'>Hello</a>"
     return html.format(format)
 
 @app.route('/hello')
-# ‘/hello’ URL is bound with hello() function.
+# ï¿½/helloï¿½ URL is bound with hello() function.
 def hello():
-    Log.info("Hello World! Version[{app_version}]") 
+    LOG.info(f"Hello World! Version[{app_version}]") 
     return 'Hello World! <br/>Version[' + app_version + ']'
 
 # main driver function

@@ -3,8 +3,9 @@
 setup:
 	echo "Executing make setup"
 	# Install Hadolint
-        sudo wget -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v2.8.0/hadolint-Linux-x86_64 && \
-                 sudo chmod +x /bin/hadolint
+	[ -f /bin/hadolint ] && echo "Hadolint already exists" || \
+	    ( sudo wget -q -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v2.8.0/hadolint-Linux-x86_64 && \
+	      sudo chmod +x /bin/hadolint  && echo "Hadolint installed" ) 
 	# Create python virtualenv & source it
 	python3 -m venv ~/.devops
 	source ~/.devops/bin/activate
@@ -14,8 +15,8 @@ install:
 	echo "Executing make install"
 	# This should be run from inside a virtualenv
 	source ~/.devops/bin/activate
-	pip install --upgrade pip && \
-		pip install -r requirements.txt
+	pip3 install --upgrade pip && \
+		pip3 install -r requirements.txt
 
 test:
 	# Additional, optional, tests could go here
@@ -30,6 +31,6 @@ lint:
 	# This is a linter for Python source code linter: https://www.pylint.org/
 	# This should be run from inside a virtualenv
 	source ~/.devops/bin/activate
-	pylint --disable=R,C,W1203,W1202 app.py
+	pylint --disable=R,C,W1203,W1202 src/app.py
 
 all: install lint test
