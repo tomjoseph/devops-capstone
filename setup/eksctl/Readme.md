@@ -35,3 +35,11 @@ eksctl create cluster -f cluster.yaml
 '''
 eksctl delete cluster -f cluster.yaml
 '''
+
+** eksctl did not work **
+The Udacity profile does not have access required to build this. 
+
+Cloudformation Error:
+'''
+AccessDenied. User doesn't have permission to call iam:GetInstanceProfile
+'''

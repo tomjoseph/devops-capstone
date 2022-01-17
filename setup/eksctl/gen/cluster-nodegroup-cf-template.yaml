@@ -1,0 +1,324 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "EKS nodes (AMI family: AmazonLinux2, SSH access: true, private networking: false) [created and managed by eksctl]",
+    "Mappings": {
+        "ServicePrincipalPartitionMap": {
+            "aws": {
+                "EC2": "ec2.amazonaws.com",
+                "EKS": "eks.amazonaws.com",
+                "EKSFargatePods": "eks-fargate-pods.amazonaws.com"
+            },
+            "aws-cn": {
+                "EC2": "ec2.amazonaws.com.cn",
+                "EKS": "eks.amazonaws.com",
+                "EKSFargatePods": "eks-fargate-pods.amazonaws.com"
+            },
+            "aws-us-gov": {
+                "EC2": "ec2.amazonaws.com",
+                "EKS": "eks.amazonaws.com",
+                "EKSFargatePods": "eks-fargate-pods.amazonaws.com"
+            }
+        }
+    },
+    "Resources": {
+        "EgressInterCluster": {
+            "Type": "AWS::EC2::SecurityGroupEgress",
+            "Properties": {
+                "Description": "Allow control plane to communicate with worker nodes in group ng-1 (kubelet and workload TCP ports)",
+                "DestinationSecurityGroupId": {
+                    "Ref": "SG"
+                },
+                "FromPort": 1025,
+                "GroupId": {
+                    "Fn::ImportValue": "eksctl-tjk-devops-cluster-cluster::SecurityGroup"
+                },
+                "IpProtocol": "tcp",
+                "ToPort": 65535
+            }
+        },
+        "EgressInterClusterAPI": {
+            "Type": "AWS::EC2::SecurityGroupEgress",
+            "Properties": {
+                "Description": "Allow control plane to communicate with worker nodes in group ng-1 (workloads using HTTPS port, commonly used with extension API servers)",
+                "DestinationSecurityGroupId": {
+                    "Ref": "SG"
+                },
+                "FromPort": 443,
+                "GroupId": {
+                    "Fn::ImportValue": "eksctl-tjk-devops-cluster-cluster::SecurityGroup"
+                },
+                "IpProtocol": "tcp",
+                "ToPort": 443
+            }
+        },
+        "IngressInterClusterCP": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Properties": {
+                "Description": "Allow control plane to receive API requests from worker nodes in group ng-1",
+                "FromPort": 443,
+                "GroupId": {
+                    "Fn::ImportValue": "eksctl-tjk-devops-cluster-cluster::SecurityGroup"
+                },
+                "IpProtocol": "tcp",
+                "SourceSecurityGroupId": {
+                    "Ref": "SG"
+                },
+                "ToPort": 443
+            }
+        },
+        "NodeGroup": {
+            "Type": "AWS::AutoScaling::AutoScalingGroup",
+            "Properties": {
+                "DesiredCapacity": "1",
+                "LaunchTemplate": {
+                    "LaunchTemplateName": {
+                        "Fn::Sub": "${AWS::StackName}"
+                    },
+                    "Version": {
+                        "Fn::GetAtt": [
+                            "NodeGroupLaunchTemplate",
+                            "LatestVersionNumber"
+                        ]
+                    }
+                },
+                "MaxSize": "2",
+                "MinSize": "1",
+                "Tags": [{
+                        "Key": "Name",
+                        "PropagateAtLaunch": "true",
+                        "Value": "tjk-devops-cluster-ng-1-Node"
+                    },
+                    {
+                        "Key": "kubernetes.io/cluster/tjk-devops-cluster",
+                        "PropagateAtLaunch": "true",
+                        "Value": "owned"
+                    }
+                ],
+                "VPCZoneIdentifier": {
+                    "Fn::Split": [
+                        ",",
+                        {
+                            "Fn::ImportValue": "eksctl-tjk-devops-cluster-cluster::SubnetsPublic"
+                        }
+                    ]
+                }
+            },
+            "UpdatePolicy": {
+                "AutoScalingRollingUpdate": {}
+            }
+        },
+        "NodeGroupLaunchTemplate": {
+            "Type": "AWS::EC2::LaunchTemplate",
+            "Properties": {
+                "LaunchTemplateData": {
+                    "BlockDeviceMappings": [{
+                        "DeviceName": "/dev/xvda",
+                        "Ebs": {
+                            "Encrypted": false,
+                            "Iops": 3000,
+                            "Throughput": 125,
+                            "VolumeSize": 20,
+                            "VolumeType": "gp3"
+                        }
+                    }],
+                    "IamInstanceProfile": {
+                        "Arn": {
+                            "Fn::GetAtt": [
+                                "NodeInstanceProfile",
+                                "Arn"
+                            ]
+                        }
+                    },
+                    "ImageId": "ami-0e09bf993397d63d5",
+                    "InstanceType": "t2.micro",
+                    "KeyName": "udacity",
+                    "MetadataOptions": {
+                        "HttpPutResponseHopLimit": 2,
+                        "HttpTokens": "optional"
+                    },
+                    "NetworkInterfaces": [{
+                        "DeviceIndex": 0,
+                        "Groups": [{
+                                "Fn::ImportValue": "eksctl-tjk-devops-cluster-cluster::SharedNodeSecurityGroup"
+                            },
+                            {
+                                "Ref": "SG"
+                            }
+                        ],
+                        "NetworkCardIndex": 0
+                    }],
+                    "TagSpecifications": [{
+                            "ResourceType": "instance",
+                            "Tags": [{
+                                "Key": "Name",
+                                "Value": "tjk-devops-cluster-ng-1-Node"
+                            }]
+                        },
+                        {
+                            "ResourceType": "volume",
+                            "Tags": [{
+                                "Key": "Name",
+                                "Value": "tjk-devops-cluster-ng-1-Node"
+                            }]
+                        },
+                        {
+                            "ResourceType": "network-interface",
+                            "Tags": [{
+                                "Key": "Name",
+                                "Value": "tjk-devops-cluster-ng-1-Node"
+                            }]
+                        }
+                    ],
+                    "UserData": "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"
+                },
+                "LaunchTemplateName": {
+                    "Fn::Sub": "${AWS::StackName}"
+                }
+            }
+        },
+        "NodeInstanceProfile": {
+            "Type": "AWS::IAM::InstanceProfile",
+            "Properties": {
+                "Path": "/",
+                "Roles": [{
+                    "Ref": "NodeInstanceRole"
+                }]
+            }
+        },
+        "NodeInstanceRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Statement": [{
+                        "Action": [
+                            "sts:AssumeRole"
+                        ],
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": [{
+                                "Fn::FindInMap": [
+                                    "ServicePrincipalPartitionMap",
+                                    {
+                                        "Ref": "AWS::Partition"
+                                    },
+                                    "EC2"
+                                ]
+                            }]
+                        }
+                    }],
+                    "Version": "2012-10-17"
+                },
+                "ManagedPolicyArns": [{
+                        "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+                    },
+                    {
+                        "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+                    },
+                    {
+                        "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/AmazonEKS_CNI_Policy"
+                    },
+                    {
+                        "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore"
+                    }
+                ],
+                "Path": "/",
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": {
+                        "Fn::Sub": "${AWS::StackName}/NodeInstanceRole"
+                    }
+                }]
+            }
+        },
+        "SG": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "Communication between the control plane and worker nodes in group ng-1",
+                "SecurityGroupIngress": [{
+                        "Description": "[IngressInterCluster] Allow worker nodes in group ng-1 to communicate with control plane (kubelet and workload TCP ports)",
+                        "FromPort": 1025,
+                        "IpProtocol": "tcp",
+                        "SourceSecurityGroupId": {
+                            "Fn::ImportValue": "eksctl-tjk-devops-cluster-cluster::SecurityGroup"
+                        },
+                        "ToPort": 65535
+                    },
+                    {
+                        "Description": "[IngressInterClusterAPI] Allow worker nodes in group ng-1 to communicate with control plane (workloads using HTTPS port, commonly used with extension API servers)",
+                        "FromPort": 443,
+                        "IpProtocol": "tcp",
+                        "SourceSecurityGroupId": {
+                            "Fn::ImportValue": "eksctl-tjk-devops-cluster-cluster::SecurityGroup"
+                        },
+                        "ToPort": 443
+                    },
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "Description": "Allow SSH access to worker nodes in group ng-1",
+                        "FromPort": 22,
+                        "IpProtocol": "tcp",
+                        "ToPort": 22
+                    },
+                    {
+                        "CidrIpv6": "::/0",
+                        "Description": "Allow SSH access to worker nodes in group ng-1",
+                        "FromPort": 22,
+                        "IpProtocol": "tcp",
+                        "ToPort": 22
+                    }
+                ],
+                "Tags": [{
+                        "Key": "kubernetes.io/cluster/tjk-devops-cluster",
+                        "Value": "owned"
+                    },
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Sub": "${AWS::StackName}/SG"
+                        }
+                    }
+                ],
+                "VpcId": {
+                    "Fn::ImportValue": "eksctl-tjk-devops-cluster-cluster::VPC"
+                }
+            }
+        }
+    },
+    "Outputs": {
+        "FeatureLocalSecurityGroup": {
+            "Value": true
+        },
+        "FeaturePrivateNetworking": {
+            "Value": false
+        },
+        "FeatureSharedSecurityGroup": {
+            "Value": true
+        },
+        "InstanceProfileARN": {
+            "Value": {
+                "Fn::GetAtt": [
+                    "NodeInstanceProfile",
+                    "Arn"
+                ]
+            },
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}::InstanceProfileARN"
+                }
+            }
+        },
+        "InstanceRoleARN": {
+            "Value": {
+                "Fn::GetAtt": [
+                    "NodeInstanceRole",
+                    "Arn"
+                ]
+            },
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}::InstanceRoleARN"
+                }
+            }
+        }
+    }
+}
