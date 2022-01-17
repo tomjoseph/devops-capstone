@@ -100,7 +100,7 @@ jobs:
           name: Ensure app infrastructure exists
           command: |
             aws cloudformation deploy \
-              --template-file .circleci/files/infra.yml \
+              --template-file .circleci/files/k8s-infra.yml \
               --tags "Project=devops-capstone-infra-tjk-<< pipeline.parameters.workflow-id >>" \
               --stack-name "infra-tjk-<< pipeline.parameters.workflow-id >>" \
               --parameter-overrides ID="<< pipeline.parameters.workflow-id >>"  
