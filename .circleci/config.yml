@@ -69,7 +69,7 @@ jobs:
           name: install dependencies
           command: |
             make setup
-            #. ~/.devops/bin/activate
+            . ~/.devops/bin/activate
             make install
                 
       - save_cache:
@@ -81,7 +81,7 @@ jobs:
       - run:
           name: run lint
           command: |
-            #. ~/.devops/bin/activate
+            . ~/.devops/bin/activate
             make lint
 
 

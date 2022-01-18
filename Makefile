@@ -8,14 +8,14 @@ setup:
 	    ( sudo wget -q -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v2.8.0/hadolint-Linux-x86_64 && \
 	      sudo chmod +x /bin/hadolint  && echo "Hadolint installed" ) 
 	# Create python virtualenv & source it
-	python -m venv ~/.devops
-	. ~/.devops/bin/activate
+	python3 -m venv ~/.devops
+	#. ~/.devops/bin/activate
 	#
 
 install:
 	echo "Executing make install"
 	# This should be run from inside a virtualenv
-	. ~/.devops/bin/activate
+	#. ~/.devops/bin/activate
 	pip install --upgrade pip && \
 		pip install -r requirements.txt
 
@@ -31,7 +31,7 @@ lint:
 	#
 	# This is a linter for Python source code linter: https://www.pylint.org/
 	# This should be run from inside a virtualenv
-	. ~/.devops/bin/activate
+	#. ~/.devops/bin/activate
 	pylint --disable=R,C,W1203,W1202 src/app.py
 
 clean:
