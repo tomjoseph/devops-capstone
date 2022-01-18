@@ -24,7 +24,6 @@ def home():
 @app.route('/hello')
 def hello():
     LOG.info(f"Hello World! Version[{app_version}]") 
-    test for lint
     return 'Hello World! <br/>Version[' + app_version + ']';
 
 @app.route('/version')
