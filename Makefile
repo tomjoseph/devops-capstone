@@ -33,4 +33,7 @@ lint:
 	source ~/.devops/bin/activate
 	pylint --disable=R,C,W1203,W1202 src/app.py
 
-all: install lint test
+clean:
+	rm -f ~/.devops
+
+all: setup install lint
