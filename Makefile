@@ -16,8 +16,8 @@ install:
 	echo "Executing make install"
 	# This should be run from inside a virtualenv
 	. ~/.devops/bin/activate
-	pip3 install --upgrade pip && \
-		pip3 install -r requirements.txt
+	pip install --upgrade pip && \
+		pip install -r requirements.txt
 
 test:
 	# Additional, optional, tests could go here
