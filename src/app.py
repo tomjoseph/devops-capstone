@@ -24,11 +24,11 @@ def home():
 @app.route('/hello')
 def hello():
     LOG.info(f"Hello World! Version[{app_version}]") 
-    return 'Hello World! <br/>Version[' + app_version + ']';
+    return 'Hello World! <br/>Version[' + app_version + ']'
 
 @app.route('/version')
 def version():
-    return os.getenv('VERSION_INFO');
+    return os.getenv('VERSION_INFO')
 
 # main driver function
 if __name__ == '__main__':
