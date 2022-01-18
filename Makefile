@@ -1,18 +1,19 @@
 # Makefile
 .PHONY: setup install test lint clean
 
-setup:
+setup: 
 	echo "Executing make setup"
 	# Install Hadolint
-	[ -f /bin/hadolint ] && echo "Hadolint already exists" || \
+	[ -f /bin/hadolint ] && echo "Hadolint already exists!!" || \
 	    ( sudo wget -q -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v2.8.0/hadolint-Linux-x86_64 && \
-	      sudo chmod +x /bin/hadolint  && echo "Hadolint installed" ) 
+	      sudo chmod +x /bin/hadolint  && echo "Hadolint installed!" ) 
 	# Create python virtualenv & source it
-	python3 -m venv ~/.devops
-	. ~/.devops/bin/activate
+	[ -f ~/.devops/bin/activate ] && echo "venv .devops already exists!!" || \
+	    ( python3 -m venv ~/.devops && \
+	      . ~/.devops/bin/activate  && echo "venv .devops setup!" ) 
 	#
 
-install:
+install: 
 	echo "Executing make install"
 	# This should be run from inside a virtualenv
 	. ~/.devops/bin/activate
