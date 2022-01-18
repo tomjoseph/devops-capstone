@@ -9,7 +9,7 @@ setup:
 	      sudo chmod +x /bin/hadolint  && echo "Hadolint installed" ) 
 	# Create python virtualenv & source it
 	python3 -m venv ~/.devops
-	source ~/.devops/bin/activate
+	#source ~/.devops/bin/activate
 	#
 
 install:
