@@ -27,6 +27,7 @@ jobs:
           command: |
             kubectl get services
           name: Test cluster
+
 workflows:
   deployment:
     jobs:
@@ -36,7 +37,7 @@ workflows:
           cluster-name: my-eks-demo
           requires:
             - aws-eks/create-cluster
-      - aws-eks/delete-cluster:
-          cluster-name: my-eks-demo
-          requires:
-            - test-cluster
+#      - aws-eks/delete-cluster:
+#          cluster-name: my-eks-demo
+#          requires:
+#            - test-cluster
