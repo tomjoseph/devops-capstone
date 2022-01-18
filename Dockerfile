@@ -1,4 +1,5 @@
-FROM python:3.7.3-stretch
+#FROM python:3.7.3-stretch
+FROM python:3.10-slim
 
 # Create a working directory
 WORKDIR /app
@@ -9,7 +10,7 @@ COPY src /app/src
 
 # Install packages from requirements.txt
 # hadolint ignore=DL3013
-RUN make install
+RUN make setup install
 
 # Expose port 80
 EXPOSE 80

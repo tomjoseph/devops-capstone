@@ -82,6 +82,7 @@ jobs:
             make lint
 
 
+
 workflows:
 
   setup-eks-cluster-infra:
@@ -108,3 +109,14 @@ workflows:
     jobs:
       
       - build-app
+      - aws-ecr/build-and-push-image:
+          name: build-and-push-image
+          account-url: AWS_ECR_URL
+          no-output-timeout: 20m
+          path: ~/project
+          region: AWS_DEFAULT_REGION
+          repo: devops_capstone
+          skip-when-tags-exist: false
+          tag: '${CIRCLE_SHA1}'
+          # Uncomment if the repository does not yet exist
+          create-repo: true
