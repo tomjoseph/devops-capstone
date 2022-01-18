@@ -1,0 +1,177 @@
+version: 2.1
+
+parameters:
+  workflow-id:
+    type: string
+    default: "${CIRCLE_WORKFLOW_ID:0:7}"
+#    default: "1010101"
+
+orbs: 
+  slack: circleci/slack@4.5.0
+  aws-cli: circleci/aws-cli@2.0.6
+
+commands:
+  destroy-environment:
+    description: Destroy infra cloudformation stacks given a workflow ID.
+    parameters:
+      workflow-id:
+        type: string
+        default: "<< pipeline.parameters.workflow-id >>"
+    steps:
+      - run:
+          name: Destroy environments
+          when: on_fail
+          command: |
+             echo "Destroying environment: << parameters.workflow-id >> "
+             aws cloudformation delete-stack --stack-name "infra-tjk-<< parameters.workflow-id >>"
+
+  notify-on-failure:
+    description: Notify on failure
+    steps:
+      - slack/notify:
+          channel: circleci-tom
+          event: fail
+          template: basic_fail_1
+
+jobs:
+
+  build-app:
+    docker:
+      - image: circleci/python:3.7.3-stretch
+      
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "requirements.txt" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+
+      - run:
+          name: install dependencies
+          command: |
+            #make setup
+            python3 -m venv ~/.devops
+            source ~/.devops/bin/activate
+            #pip install -r requirements.txt
+            make install
+                
+      - save_cache:
+          paths:
+            - ~/.devops
+          key: v1-dependencies-{{ checksum "requirements.txt" }}
+        
+      # run lints!
+      - run:
+          name: run lint
+          command: |
+            source ~/.devops/bin/activate
+            make lint
+
+  test-app:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "requirements.txt" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+      - run:
+          name: Test app
+          command: |
+            echo "run test"
+            
+  deploy-infrastructure:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Install tar utility
+          command: |
+            yum install -y tar gzip
+      - run:
+          name: Ensure app infrastructure exists
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/k8s-infra.yml \
+              --tags "Project=devops-capstone-infra-tjk-<< pipeline.parameters.workflow-id >>" \
+              --stack-name "infra-tjk-<< pipeline.parameters.workflow-id >>" \
+              --parameter-overrides ID="<< pipeline.parameters.workflow-id >>"  
+      # Rollback on failure      
+      - destroy-environment
+#      - notify-on-failure
+
+  save-workspace-inventory:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Install tar utility
+          command: |
+            yum install -y tar gzip
+      - run:
+          name: Add infra ip to ansible inventory
+          command: |
+            aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --filters "Name=tag:Project,Values=devops-capstone-infra-tjk-<< pipeline.parameters.workflow-id >>" \
+              --output text >> .circleci/ansible/inventory.txt
+            echo "K8s Infra IPs:"
+            cat .circleci/ansible/inventory.txt
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/ansible/inventory.txt
+      # Rollback on failure      
+      - destroy-environment
+#      - notify-on-failure
+
+  configure-infrastructure:
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["4b:34:8a:72:f8:b0:bf:9d:c7:fc:6a:0a:27:8a:c1:92"]
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install Ansible
+          command: |
+            apk add --update ansible
+      - run:
+          name: Install aws-cli
+          command: |
+            #pip3 install awscliv2 --upgrade
+            pip install awscli
+      - run:
+          name: Configure server
+          command: |
+            echo "EC2 Inventory"
+            echo ".circleci/ansible/inventory.txt" 
+            cat .circleci/ansible/inventory.txt
+            # Run ansible
+            echo "Running ansible configure-server.yml"
+            cd .circleci/ansible
+            pwd
+            ansible-playbook -i inventory.txt configure-infra.yml
+      # Rollback on failure
+      - destroy-environment
+#      - notify-on-failure
+
+workflows:
+  default:
+    jobs:
+      - deploy-infrastructure
+      - save-workspace-inventory:
+          requires: [deploy-infrastructure]
+      - configure-infrastructure:
+          requires: [save-workspace-inventory]
