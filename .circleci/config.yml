@@ -131,7 +131,7 @@ jobs:
       - kubernetes/create-or-update-resource:
           resource-file-path: "deployment/app-deployment.yaml"
           get-rollout-status: true
-          resource-name: deployment/demoapp
+          resource-name: deployment/devops-capstone-app
       - kubernetes/create-or-update-resource:
           resource-file-path: "deployment/app-service.yaml"
 
