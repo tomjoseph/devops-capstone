@@ -8,6 +8,8 @@ WORKDIR /app
 COPY requirements.txt Makefile  /app/
 COPY src /app/src
 
+RUN apk add --no-cache make
+
 # Install packages from requirements.txt
 # hadolint ignore=DL3013
 RUN make setup install
