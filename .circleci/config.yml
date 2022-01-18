@@ -14,6 +14,10 @@ parameters:
     type: string
     default: "devops-capstone"
 
+  kube-deployment-app-name:
+    type: string
+    default: "devops-capstone-app"
+
   workflow-id:
     type: string
     default: "${CIRCLE_WORKFLOW_ID:0:7}"
@@ -117,8 +121,6 @@ jobs:
           name: Create deployment manifest
           command: |
             # Replace the placeholders in the manifest with the intended values.
-            # This is to avoid hardcoding the image name in the manifest, to make this
-            # demo project more portable.
             BUILD_DATE=$(date '+%Y%m%d%H%M%S')
             cat deployment/app-deployment.yaml.template |\
                sed "s|DOCKER_IMAGE_NAME|<< parameters.docker-image-name >>|\
@@ -131,7 +133,7 @@ jobs:
       - kubernetes/create-or-update-resource:
           resource-file-path: "deployment/app-deployment.yaml"
           get-rollout-status: true
-          resource-name: deployment/devops-capstone-app
+          resource-name: deployment/<< pipeline.parameters.kube-deployment-app-name >>
       - kubernetes/create-or-update-resource:
           resource-file-path: "deployment/app-service.yaml"
 
@@ -164,15 +166,17 @@ jobs:
           command: |
             kubectl get pods
             kubectl get services
+            kubectl rollout status deployment/<< pipeline.parameters.kube-deployment-app-name >>
             sleep 30
             for attempt in {1..20}; do
-              EXTERNAL_IP=$(kubectl get service demoapp | awk '{print $4}' | tail -n1)
+              EXTERNAL_IP=$(kubectl get service << pipeline.parameters.kube-deployment-app-name >> | awk '{print $4}' | tail -n1)
               echo "Checking external IP: ${EXTERNAL_IP}"
               if [ -n "${EXTERNAL_IP}" ] && [ -z $(echo "${EXTERNAL_IP}" | grep "pending") ]; then
                 break
               fi
               echo "Waiting for external IP to be ready: ${EXTERNAL_IP}"
               sleep 10
+              kubectl rollout status deployment/<< pipeline.parameters.kube-deployment-app-name >>
             done
             sleep 180
             curl -s --retry 10 "http://$EXTERNAL_IP/version" | grep "<< parameters.expected-version-info >>"
@@ -234,3 +238,4 @@ workflows:
           expected-version-info: "${CIRCLE_SHA1}"
           requires:
             - deploy-application
+

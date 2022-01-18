@@ -11,7 +11,7 @@ app = Flask(__name__)
 LOG = create_logger(app)
 LOG.setLevel(logging.INFO)
 
-app_version = "1.0"
+app_version = "1.1"
 
 # The route() function of the Flask class is a decorator,
 # which tells the application which URL should call
@@ -24,7 +24,7 @@ def home():
 @app.route('/hello')
 def hello():
     LOG.info(f"Hello World! Version[{app_version}]") 
-    return 'Hello World! <br/>Version[' + app_version + ']'
+    return 'Hello World! <hr/>Version[' + app_version + ']' + '<br/>Build Date: ' + os.getenv('BUILD_DATE')
 
 @app.route('/version')
 def version():
