@@ -3,6 +3,16 @@ orbs:
   aws-eks: circleci/aws-eks@2.0
   kubernetes: circleci/kubernetes@1.0
 jobs:
+  create-cluster:
+    executor: aws-eks/python3
+    parameters:
+      cluster-name:
+        description: |
+          Name of the EKS cluster
+        type: string
+    steps:
+      - aws-eks/create-cluster:
+          cluster-name: << parameters.cluster-name >>
   test-cluster:
     executor: aws-eks/python3
     parameters:
@@ -21,13 +31,9 @@ jobs:
 workflows:
   deployment:
     jobs:
-      - aws-eks/create-cluster:
+      - create-cluster:
           cluster-name: my-eks-demo
       - test-cluster:
           cluster-name: my-eks-demo
           requires:
-            - aws-eks/create-cluster
-      - aws-eks/delete-cluster:
-          cluster-name: my-eks-demo
-          requires:
-            - test-cluster
+            - create-cluster
