@@ -1,5 +1,5 @@
 #FROM python:3.7.3-stretch
-FROM python:3.10-slim
+FROM python:3.10-alpine
 
 # Create a working directory
 WORKDIR /app

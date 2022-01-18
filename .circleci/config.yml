@@ -120,3 +120,5 @@ workflows:
           tag: '${CIRCLE_SHA1}'
           # Uncomment if the repository does not yet exist
           create-repo: true
+          requires:
+            - build-app
