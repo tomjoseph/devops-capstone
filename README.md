@@ -51,12 +51,13 @@ Build, lint, create docker image, rolling deploy to EKS and test.
 The folloeing screenshots are attached
 
 This dir has the the screenshots from the EKS cluster setup  
+
 ```
 +---eks-cluster-setup
-        Screenshot-01-Pipeline-EksClusterSetup-Mode-CircleCI.jpg
-        Screenshot-02-EKSCTL-CF-Stack.jpg
-        Screenshot-03-EKS-Cluster-Active.jpg
-        Screenshot-04-EKS-Nodes-Running.jpg
+|       Screenshot-01-Pipeline-EksClusterSetup-Mode-CircleCI.jpg
+|       Screenshot-02-EKSCTL-CF-Stack.jpg
+|       Screenshot-03-EKS-Cluster-Active.jpg
+|       Screenshot-04-EKS-Nodes-Running.jpg
 ```
 
 This dir has the the screenshots from the App build and deployment
