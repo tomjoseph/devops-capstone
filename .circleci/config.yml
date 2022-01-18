@@ -190,8 +190,6 @@ workflows:
           cluster-name: << pipeline.parameters.kube-eks-cluster-name >>
           aws-region: $AWS_DEFAULT_REGION
           show-eksctl-command: true
-          node-type: t2.medium
-          node-volume-size: 40
 
       - test-cluster:
           cluster-name: << pipeline.parameters.kube-eks-cluster-name >>
