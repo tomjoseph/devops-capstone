@@ -15,8 +15,8 @@ COPY src /app/src
 RUN make setup 
 RUN make install
 
-# Expose port 80
-EXPOSE 80
+# Expose port 8080
+EXPOSE 8080
 
 # Run app.py at container launch
 CMD ["python3", "src/app.py"]

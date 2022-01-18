@@ -2,6 +2,7 @@
 from flask import Flask
 from flask.logging import create_logger
 import logging
+import os
 
 # Flask constructor takes the name of
 # current module (__name__) as argument.
@@ -21,10 +22,13 @@ def home():
     return html.format(format)
 
 @app.route('/hello')
-# �/hello� URL is bound with hello() function.
 def hello():
     LOG.info(f"Hello World! Version[{app_version}]") 
-    return 'Hello World! <br/>Version[' + app_version + ']'
+    return 'Hello World! <br/>Version[' + app_version + ']';
+
+@app.route('/version')
+def version():
+    return os.getenv('VERSION_INFO');
 
 # main driver function
 if __name__ == '__main__':
@@ -32,4 +36,4 @@ if __name__ == '__main__':
     # run() method of Flask class runs the application
     # on the local development server.
     # app.run()
-    app.run(host='0.0.0.0', port=80, debug=True)
+    app.run(host='0.0.0.0', port=8080, debug=True)

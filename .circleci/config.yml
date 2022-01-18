@@ -2,9 +2,17 @@ version: 2.1
 
 parameters:
 
-  setup-eks-cluster-infra:
+  is-eks-cluster-setup:
     type: boolean
     default: false
+
+  kube-eks-cluster-name:
+    type: string
+    default: "devops_capstone"
+
+  docker-ecr-repo-name:
+    type: string
+    default: "devops_capstone"
 
   workflow-id:
     type: string
@@ -48,7 +56,7 @@ jobs:
       - run:
           command: |
             kubectl get services
-          name: Test cluster 1
+          name: Test cluster
 
   build-app:
     executor: python3
@@ -81,45 +89,150 @@ jobs:
           command: |
             make lint
 
+  deploy-application:
+    executor: python3
 
+    parameters:
+      cluster-name:
+        description: |
+          Name of the EKS cluster
+        type: string
+      docker-image-name:
+        description: |
+          Name of the docker image to be deployed
+        type: string
+      version-info:
+        description: |
+          App version information
+        type: string
+      aws-region:
+        description: |
+          AWS region
+        type: string
+        default: ""
+
+    steps:
+      - checkout
+      - run:
+          name: Create deployment manifest
+          command: |
+            # Replace the placeholders in the manifest with the intended values.
+            # This is to avoid hardcoding the image name in the manifest, to make this
+            # demo project more portable.
+            BUILD_DATE=$(date '+%Y%m%d%H%M%S')
+            cat deployment/app-deployment.yaml.template |\
+               sed "s|DOCKER_IMAGE_NAME|<< parameters.docker-image-name >>|\
+                g;s|BUILD_DATE_VALUE|$BUILD_DATE|g;s|VERSION_INFO_VALUE|\
+                << parameters.version-info >>|g" > deployment/app-deployment.yaml
+      - aws-eks/update-kubeconfig-with-authenticator:
+          cluster-name: << parameters.cluster-name >>
+          install-kubectl: true
+          aws-region: << parameters.aws-region >>
+      - kubernetes/create-or-update-resource:
+          resource-file-path: "deployment/app-deployment.yaml"
+          get-rollout-status: true
+          resource-name: deployment/demoapp
+      - kubernetes/create-or-update-resource:
+          resource-file-path: "deployment/app-service.yaml"
+
+  test-application:
+    executor: python3
+
+    parameters:
+      cluster-name:
+        description: |
+          Name of the EKS cluster
+        type: string
+      aws-region:
+        description: |
+          AWS region
+        type: string
+        default: ""
+      expected-version-info:
+        description: |
+          Expected app version (this is used for testing that the
+          correct version has been deployed)
+        type: string
+
+    steps:
+      - aws-eks/update-kubeconfig-with-authenticator:
+          cluster-name: << parameters.cluster-name >>
+          install-kubectl: true
+          aws-region: << parameters.aws-region >>
+      - run:
+          name: Wait for service to be ready
+          command: |
+            kubectl get pods
+            kubectl get services
+            sleep 30
+            for attempt in {1..20}; do
+              EXTERNAL_IP=$(kubectl get service demoapp | awk '{print $4}' | tail -n1)
+              echo "Checking external IP: ${EXTERNAL_IP}"
+              if [ -n "${EXTERNAL_IP}" ] && [ -z $(echo "${EXTERNAL_IP}" | grep "pending") ]; then
+                break
+              fi
+              echo "Waiting for external IP to be ready: ${EXTERNAL_IP}"
+              sleep 10
+            done
+            sleep 180
+            curl -s --retry 10 "http://$EXTERNAL_IP/version" | grep "<< parameters.expected-version-info >>"
 
 workflows:
 
   setup-eks-cluster-infra:
-    when: << pipeline.parameters.setup-eks-cluster-infra >>
+    when: 
+      equal: [ false, << pipeline.parameters.is-eks-cluster-setup >> ]
 
     jobs:
 
       - aws-eks/create-cluster:
           executor: python3
-          cluster-name: my-eks-demo
+          cluster-name: << pipeline.parameters.kube-eks-cluster-name >>
           aws-region: $AWS_DEFAULT_REGION
           show-eksctl-command: true
+          node-type: t2.medium
+          node-volume-size: 40
 
       - test-cluster:
-          cluster-name: my-eks-demo
+          cluster-name: << pipeline.parameters.kube-eks-cluster-name >>
           aws-region: $AWS_DEFAULT_REGION
           requires:
             - aws-eks/create-cluster
 
   build-and-deploy-app:
-    when: 
-      equal: [ false, << pipeline.parameters.setup-eks-cluster-infra >> ]
+    when: << pipeline.parameters.is-eks-cluster-setup >>
     
     jobs:
       
-#      - build-app:
-#          name: build-and-lint-app
+      - build-app:
+          name: build-and-lint-app
+
       - aws-ecr/build-and-push-image:
           name: docker-build-and-push-image
           account-url: AWS_ECR_URL
           no-output-timeout: 20m
           path: ~/project
           region: AWS_DEFAULT_REGION
-          repo: devops_capstone
+          repo: << pipeline.parameters.docker-ecr-repo-name >>
           skip-when-tags-exist: false
           tag: '${CIRCLE_SHA1}'
           # Uncomment if the repository does not yet exist
           #create-repo: true
- #         requires:
- #           - build-and-lint-app
+          requires:
+            - build-and-lint-app
+
+      - deploy-application:
+          cluster-name: << pipeline.parameters.kube-eks-cluster-name >>
+          aws-region: $AWS_DEFAULT_REGION
+          docker-image-name: "${AWS_ECR_URL}/<< pipeline.parameters.docker-ecr-repo-name >>:${CIRCLE_SHA1}"
+          version-info: "${CIRCLE_SHA1}"
+          requires:
+            - docker-build-and-push-image
+
+      - test-application:
+          name: test-application
+          cluster-name: << pipeline.parameters.kube-eks-cluster-name >>
+          aws-region: $AWS_DEFAULT_REGION
+          expected-version-info: "${CIRCLE_SHA1}"
+          requires:
+            - deploy-application
