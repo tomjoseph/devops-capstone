@@ -38,6 +38,7 @@ workflows:
     jobs:
       - aws-eks/create-cluster:
           cluster-name: my-eks-demo
+          executor: aws-eks/python3
       - test-cluster:
           cluster-name: my-eks-demo
           requires:
