@@ -11,6 +11,11 @@ orbs:
   aws-eks: circleci/aws-eks@2.1.0
   kubernetes: circleci/kubernetes@1.3.0
 
+executors:
+  build_container:
+    docker:
+      - image: circleci/python:3.7.3-node
+
 jobs:
   test-cluster:
     executor: aws-eks/python3
