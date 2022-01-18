@@ -58,7 +58,7 @@ jobs:
     steps:
       - checkout
 
-      # Download and cache dependencies
+      # Restore cache dependencies
       - restore_cache:
           keys:
           - dependencies-{{ checksum "requirements.txt" }}
