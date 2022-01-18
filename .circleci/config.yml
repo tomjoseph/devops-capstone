@@ -61,7 +61,7 @@ jobs:
       # Restore cache dependencies
       - restore_cache:
           keys:
-          - dependencies-{{ checksum "requirements.txt" }}
+          - v2-dependencies-{{ checksum "requirements.txt" }}
 
       - run:
           name: install dependencies
@@ -74,7 +74,7 @@ jobs:
           paths:
             - ~/.devops
             - /bin/hadolint
-          key: dependencies-{{ checksum "requirements.txt" }}
+          key: v2-dependencies-{{ checksum "requirements.txt" }}
         
       # run lints!
       - run:
