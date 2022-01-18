@@ -130,3 +130,7 @@ dmypy.json
 
 *.bk*
 *.bak*
+
+inventory.txt
+
+*.pem

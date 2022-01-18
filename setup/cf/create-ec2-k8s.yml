@@ -1,0 +1,41 @@
+Description: >
+  EC2 K8s - Infra Server
+
+Parameters:
+  ID:
+    Description: Unique identifier.
+    Type: String
+
+Resources:
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub tjk-k8s-infra-${ID}
+      GroupDescription: Allow port 22 and port 80.
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.medium
+      SecurityGroups:
+        - Ref: InstanceSecurityGroup
+      HibernationOptions:
+        Configured: false
+      KeyName: udacity 
+      ImageId: ami-08e4e35cccc6189f4
+      Tags:
+        - Key: Name
+          Value: !Sub k8s-infra-${ID}

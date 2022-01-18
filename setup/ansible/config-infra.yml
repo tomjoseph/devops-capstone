@@ -1,9 +1,0 @@
----
-- name: "Playing with Ansible and Git"
-  
-  local_action:
-  - name: "just execute a dir command"
-    shell: "dir"
-    register: "output"
-
-  - debug: var=output.stdout_lines

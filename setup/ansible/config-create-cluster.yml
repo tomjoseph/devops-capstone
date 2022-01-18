@@ -1,0 +1,37 @@
+---
+- name: "Creating Kubenetes Infrastructure"
+  hosts: 127.0.0.1
+  connection: local
+  vars:
+    - workflowId: 1010102
+    
+  tasks:  
+  
+  - name: Create EC2 for K8S
+    ansible.builtin.shell: |
+      aws cloudformation deploy \
+        --template-file ../cf/create-ec2-k8s.yml \
+        --tags "Project=devops-capstone-infra-tjk-{{workflowId}}" \
+        --stack-name "devops-capstone-infra-tjk-{{workflowId}}" \
+        --parameter-overrides ID="{{workflowId}}"  
+    register: ec2_k8s
+    
+  - name: Debug Info
+    ansible.builtin.debug:
+      var: ec2_k8s
+
+
+  - name: Create EC2 for K8S
+    ansible.builtin.shell: |
+      cp -f inventory.tpl inventory.txt
+      aws ec2 describe-instances \
+        --query 'Reservations[*].Instances[*].PublicIpAddress' \
+        --filters "Name=tag:Project,Values=devops-capstone-infra-tjk-{{workflowId}}" \
+        --output text >> inventory.txt
+      echo "EC2 K8s Infra IPs:"
+      cat inventory.txt
+    register: ec2_k8s_inventory
+    
+  - name: Debug Info
+    ansible.builtin.debug:
+      var: ec2_k8s_inventory
