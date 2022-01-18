@@ -27,18 +27,16 @@ http://af7643c1b09f94672adc7a4bc874a685-1201844613.us-east-1.elb.amazonaws.com/h
 # Pipeline
 The pipeline can be run in 2 modes based on the parameter 'is-eks-cluster-setup'
 
+**is-eks-cluster-setup: false**
 ```
-is-eks-cluster-setup: false
-
 Build and setup the EKS cluster usind eksctl circleci orb.
  setup-eks-cluster-infra
     create-eks-clsuter - aws-eks/create-cluster
     test-eks-cluster
 ```
 
+**is-eks-cluster-setup: true**
 ```
-is-eks-cluster-setup: true
-
 Build, lint, create docker image, rolling deploy to EKS and test.
  build-and-deploy-app:
     build-and-lint-app
