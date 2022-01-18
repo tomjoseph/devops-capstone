@@ -8,11 +8,11 @@ parameters:
 
   kube-eks-cluster-name:
     type: string
-    default: "devops_capstone"
+    default: "devops-capstone"
 
   docker-ecr-repo-name:
     type: string
-    default: "devops_capstone"
+    default: "devops-capstone"
 
   workflow-id:
     type: string
@@ -215,7 +215,7 @@ workflows:
           skip-when-tags-exist: false
           tag: '${CIRCLE_SHA1}'
           # Uncomment if the repository does not yet exist
-          #create-repo: true
+          create-repo: true
           requires:
             - build-and-lint-app
 
