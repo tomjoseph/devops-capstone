@@ -32,7 +32,7 @@ jobs:
       - run:
           command: |
             kubectl get services
-          name: Test cluster
+          name: Test cluster 1
 
 workflows:
   deployment:
