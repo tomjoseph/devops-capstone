@@ -16,3 +16,4 @@ And then use the generated fingerprint to configure in the config file.
       - add_ssh_keys:
           fingerprints: ["4b:34:8a:72:f8:b0:bf:9d:c7:fc:6a:0a:27:8a:c1:92"]
 
+

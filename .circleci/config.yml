@@ -1,29 +1,34 @@
 version: '2.1'
+
 orbs:
-  aws-eks: circleci/aws-eks@2.0
-  kubernetes: circleci/kubernetes@1.0
+  aws-ecr: circleci/aws-ecr@7.3.0
+  aws-eks: circleci/aws-eks@2.1.0
+  kubernetes: circleci/kubernetes@1.3.0
+
+executors:
+  python3:
+    docker:
+      - image: cimg/python:3.10-browsers
+
 jobs:
-  create-cluster:
-    executor: aws-eks/python3
-    parameters:
-      cluster-name:
-        description: |
-          Name of the EKS cluster
-        type: string
-    steps:
-      - aws-eks/create-cluster:
-          cluster-name: << parameters.cluster-name >>
   test-cluster:
-    executor: aws-eks/python3
+    executor: python3
     parameters:
       cluster-name:
         description: |
           Name of the EKS cluster
         type: string
+      aws-region:
+        description: |
+          AWS region
+        type: string
+        default: ""
     steps:
-      - kubernetes/install
+#      - kubernetes/install
       - aws-eks/update-kubeconfig-with-authenticator:
           cluster-name: << parameters.cluster-name >>
+          aws-region: << parameters.aws-region >>
+          install-kubectl: true
       - run:
           command: |
             kubectl get services
@@ -31,9 +36,13 @@ jobs:
 workflows:
   deployment:
     jobs:
-      - create-cluster:
+      - aws-eks/create-cluster:
+          executor: python3
           cluster-name: my-eks-demo
+          aws-region: $AWS_DEFAULT_REGION
+          show-eksctl-command: true
       - test-cluster:
           cluster-name: my-eks-demo
+          aws-region: $AWS_DEFAULT_REGION
           requires:
             - create-cluster
