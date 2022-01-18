@@ -164,10 +164,10 @@ jobs:
       - run:
           name: Wait for service to be ready
           command: |
+            kubectl rollout status deployment/<< pipeline.parameters.kube-deployment-app-name >>
             kubectl get pods
             kubectl get services
-            kubectl rollout status deployment/<< pipeline.parameters.kube-deployment-app-name >>
-            sleep 30
+            sleep 10
             for attempt in {1..20}; do
               EXTERNAL_IP=$(kubectl get service << pipeline.parameters.kube-deployment-app-name >> | awk '{print $4}' | tail -n1)
               echo "Checking external IP: ${EXTERNAL_IP}"
@@ -178,7 +178,7 @@ jobs:
               sleep 10
               kubectl rollout status deployment/<< pipeline.parameters.kube-deployment-app-name >>
             done
-            sleep 180
+            sleep 20
             curl -s --retry 10 "http://$EXTERNAL_IP/version" | grep "<< parameters.expected-version-info >>"
 
 workflows:
