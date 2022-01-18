@@ -1,5 +1,5 @@
 # Makefile
-.PHONY: setup install test lint clean
+.PHONY: setup install test lint
 
 setup: 
 	echo "Executing make setup"
@@ -34,8 +34,5 @@ lint:
 	# This should be run from inside a virtualenv
 	. ~/.devops/bin/activate
 	pylint --disable=R,C,W1203,W1202 src/app.py
-
-clean:
-	rm -f ~/.devops
 
 all: setup install lint
