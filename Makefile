@@ -8,7 +8,7 @@ setup:
 	    ( sudo wget -q -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v2.8.0/hadolint-Linux-x86_64 && \
 	      sudo chmod +x /bin/hadolint  && echo "Hadolint installed" ) 
 	# Create python virtualenv & source it
-	python3 -m venv ~/.devops
+	python -m venv ~/.devops
 	. ~/.devops/bin/activate
 	#
 
