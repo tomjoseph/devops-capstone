@@ -33,11 +33,11 @@ jobs:
           command: |
             kubectl get services
           name: Test cluster
+
 workflows:
   deployment:
     jobs:
       - aws-eks/create-cluster:
-          name: create-cluster
           executor: python3
           cluster-name: my-eks-demo
           aws-region: $AWS_DEFAULT_REGION
@@ -46,4 +46,4 @@ workflows:
           cluster-name: my-eks-demo
           aws-region: $AWS_DEFAULT_REGION
           requires:
-            - create-cluster
+            - aws-eks/create-cluster
