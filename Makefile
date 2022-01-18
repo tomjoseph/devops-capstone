@@ -16,7 +16,7 @@ setup:
 install: 
 	echo "Executing make install"
 	# This should be run from inside a virtualenv
-	#. ~/.devops/bin/activate
+	. ~/.devops/bin/activate
 	pip install --upgrade pip && \
 		pip install -r requirements.txt
 

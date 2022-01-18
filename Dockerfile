@@ -12,7 +12,7 @@ COPY src /app/src
 
 # Install packages from requirements.txt
 # hadolint ignore=DL3013
-#RUN make setup 
+RUN make setup 
 RUN make install
 
 # Expose port 80
