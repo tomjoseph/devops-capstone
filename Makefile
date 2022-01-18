@@ -1,4 +1,5 @@
 # Makefile
+.PHONY: setup install test lint clean
 
 setup:
 	echo "Executing make setup"
