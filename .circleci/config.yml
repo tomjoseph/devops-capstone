@@ -69,8 +69,6 @@ jobs:
           name: install dependencies
           command: |
             make setup
-            #python3 -m venv ~/.devops
-            . ~/.devops/bin/activate
             make install
                 
       - save_cache:
@@ -82,7 +80,6 @@ jobs:
       - run:
           name: run lint
           command: |
-            . ~/.devops/bin/activate
             make lint
 
 
