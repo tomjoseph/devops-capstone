@@ -73,6 +73,7 @@ jobs:
       - save_cache:
           paths:
             - ~/.devops
+            - /bin/hadolint
           key: dependencies-{{ checksum "requirements.txt" }}
         
       # run lints!
