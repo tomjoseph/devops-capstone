@@ -1,5 +1,5 @@
-#FROM python:3.7.3-stretch
-FROM python:3.10-alpine
+FROM python:3.7.3-stretch
+#FROM python:3.10-alpine
 
 # Create a working directory
 WORKDIR /app
@@ -8,7 +8,7 @@ WORKDIR /app
 COPY requirements.txt Makefile  /app/
 COPY src /app/src
 
-RUN apk add --no-cache make
+#RUN apk add --no-cache make
 
 # Install packages from requirements.txt
 # hadolint ignore=DL3013
