@@ -3,10 +3,6 @@
 
 setup: 
 	echo "Executing make setup"
-	# Install Hadolint
-	[ -f /bin/hadolint ] && echo "Hadolint already exists!!" || \
-	    ( sudo wget -q -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v2.8.0/hadolint-Linux-x86_64 && \
-	      sudo chmod +x /bin/hadolint  && echo "Hadolint installed!" ) 
 	# Create python virtualenv & source it
 	[ -f ~/.devops/bin/activate ] && echo "Python venv '.devops' already exists!!" || \
 	    ( python3 -m venv ~/.devops && \
@@ -27,6 +23,10 @@ test:
 
 lint:
 	echo "Executing make lint"
+	# Install Hadolint if not exists!
+	[ -f /bin/hadolint ] && echo "Hadolint already exists!!" || \
+	    ( sudo wget -q -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v2.8.0/hadolint-Linux-x86_64 && \
+	      sudo chmod +x /bin/hadolint  && echo "Hadolint installed!" ) 
 	# This is linter for Dockerfiles
 	hadolint Dockerfile
 	#
